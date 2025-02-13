@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Radio | Premium Streaming</title>
+    <link href="https://unpkg.com/ionicons@5.5.2/dist/css/ionicons.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #1a1a1a;
+            --accent: #00ff88;
+            --secondary: #2d2d2d;
+            --text: #ffffff;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            padding: 3rem 0;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            background: linear-gradient(45deg, #00ff88, #00ccff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .stations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 2rem 0;
+        }
+
+        .station-card {
+            background: var(--secondary);
+            border-radius: 15px;
+            padding: 1.5rem;
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .station-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 255, 136, 0.1);
+        }
+
+        .station-image {
+            width: 100%;
+            height: 200px;
+            border-radius: 10px;
+            object-fit: cover;
+            margin-bottom: 1rem;
+            aspect-ratio: 1;
+        }
+
+        .play-button {
+            background: linear-gradient(45deg, #00ff88, #00ccff);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            color: var(--primary);
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .player-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 1rem 1.5rem;
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+        }
+
+        .player-controls {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            width: 100%;
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .player-artwork {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .player-text {
+            line-height: 1.3;
+        }
+
+        .player-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .player-genre {
+            color: var(--accent);
+            font-size: 0.9rem;
+        }
+
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .volume-slider {
+            width: 100px;
+        }
+
+        @media (max-width: 768px) {
+            .stations-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stations-grid p {
+    padding-bottom: 1rem;
+    padding-top: 0.2rem;
+
+}
+
+        /* Remove progress bar related styles */
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header class="header">
+            <h1>Nexus Radio</h1>
+            <p>Premium Digital Streaming Experience</p>
+        </header>
+
+        <div class="stations-grid" id="stationsContainer">
+            <!-- Stations will be dynamically loaded here -->
+        </div>
+    </div>
+
+
+
+
+    <div class="player-container" id="player">
+        <div class="player-controls">
+            <div class="player-info">
+                <img src="" class="player-artwork" id="currentArtwork">
+                <div class="player-text">
+                    <div class="player-title" id="currentTitle"></div>
+                    <div class="player-genre" id="currentGenre"></div>
+                </div>
+            </div>
+            <button class="play-button" id="playPauseBtn">
+                <i class="icon ion-md-play"></i>
+            </button>
+            <div class="volume-container">
+                <i class="icon ion-md-volume-high" style="color: var(--accent);"></i>
+                <input type="range" class="volume-slider" id="volume" min="0" max="1" step="0.1" value="1">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample radio stations data
+        const stations = [
+            {
+                name: "Radio Hungama",
+                genre: "Punjabi Hits",
+                image: "https://onlineradiofm.in/assets/image/radio/180/hot-now-punjabi.webp",
+                url: "https://s8.voscast.com:7021/stream"
+            },
+            {
+                name: "Desi World Radio",
+                genre: "Pure desi entertaiment",
+                image: "https://onlineradiofm.in/assets/image/radio/180/desi-word-radio.jpg",
+                url: "https://stream.zenolive.com/4mbfcn4mf24tv"
+            },
+            {
+                name: "Bollywood Punjabi Radio",
+                genre: "24/7 Hit Punjabi Hindi Latest SONGS",
+                image: "https://onlineradiofm.in/assets/image/radio/180/bollywood-punjabi-radio-logo.png",
+                url: "http://stream.zeno.fm/1k0y9f0cm0quv"
+            },
+            {
+                name: "Radio Punjabi Today",
+                genre: "Hit Punjabi Songs",
+                image: "https://onlineradiofm.in/assets/image/radio/180/logo2.png",
+                url: "https://stream.zenolive.com/019324w4ez4tv"
+            },
+
+
+
+            {
+                name: "Non Stop Punjabi Radio",
+                genre: "Pop Soundtrack",
+                image: "https://onlineradiofm.in/assets/image/radio/180/nonstoppunjabilogo.png",
+                url: "https://s8.voscast.com:7021/stream"
+            },
+
+            
+            {
+                name: "Desi Radio 1602 AM",
+                genre: "desi, talk, community, bhangara.",
+                image: "https://onlineradiofm.in/assets/image/radio/180/logo_desi_radio_small.png",
+                url: "https://vobook.ru/https://radio.canstream.co.uk:8001/live.mp3"
+            },
+
+            {
+                name: "Radio Bol Punjabi",
+                genre: "classic",
+                image: "https://onlineradiofm.in/assets/image/radio/180/bol-panjabi.png",
+                url: "https://bolpunjabi-ekamsoftware.radioca.st//stream"
+            },
+
+            {
+                name: "Gulshan Radio",
+                genre: "Punjabi",
+                image: "https://onlineradiofm.in/assets/image/radio/180/gulshanradio.png",
+                url: "https://s3.voscast.com/cdn/?k=67ae1ba93b418&m=;stream1739463742558/1"
+            },
+
+
+            {
+                name: "Radio Punjabi Virsa",
+                genre: "Best Punjabi Radio in UK",
+                image: "https://onlineradiofm.in/assets/image/radio/180/punjabi-virsa.jpg",
+                url: "https://node-15.zeno.fm/vpak30btzwzuv"
+            },
+
+
+            {
+                name: "Radio Beat Hindi & Punjabi",
+                genre: "Hindi & Punjabi",
+                image: "https://onlineradiofm.in/assets/image/radio/180/beat-hindi-punjabi.jpg",
+                url: "https://listen.openstream.co/7028/audio"
+            },
+            
+
+                        
+            {
+                name: "Mirchi Delhi Punjabi",
+                genre: "Punjabi / Radio Mirchi",
+                image: "https://liveradios.in/wp-content/uploads/Mirchi_Delhi_Punjabi.jpg",
+                url: "https://stream.zeno.fm/1k0y9f0cm0quv"
+            },
+            
+            {
+                name: "Dhol Radio",
+                genre: "punjabi",
+                image: "https://liveradios.in/wp-content/uploads/dholradio.jpg",
+                url: "https://www.liveradio.es/http://radio.dholradio.co:8000/radio.mp3"
+            },
+                        
+            {
+                name: "Hot Now Punjabi Radio",
+                genre: "Hungama / Punjabi",
+                image: "https://liveradios.in/wp-content/uploads/hot-now-punjabi-radio.jpg",
+                url: "https://das-edge11-live365-dal03.cdnstream.com/a53279"
+            },
+            
+
+                        
+            {
+                name: "Rang FM",
+                genre: "punjabi",
+                image: "https://liveradios.in/wp-content/uploads/rangfm.jpg",
+                url: "https://stream.zeno.fm/0qvzkvpgewzuv"
+            },
+                        
+            {
+                name: "Radio Voice of Punjab",
+                genre: "Punjabi / USA",
+                image: "https://liveradios.in/wp-content/uploads/voice-of-punjab-red-logo-1024x620-1.jpg",
+                url: "https://cast5.asurahosting.com/proxy/bulkshop/stream"
+            },
+                        
+            {
+                name: "Virat Radio",
+                genre: "punjabi",
+                image: "https://liveradios.in/wp-content/uploads/viratradio.jpg",
+                url: "https://radio.sanbroz.com/radio/8010/radio.mp3"
+            },
+                        
+            {
+                name: "Doaba Radio",
+                genre: "Punjabi",
+                image: "https://radiosindia.com/images/doabaradio.jpg",
+                url: "https://cast5.asurahosting.com/proxy/doabarad/stream"
+            },          
+              {
+                name: "Radio Punjabi Virsa",
+                genre: "Punjabi",
+                image: "https://radiosindia.com/images/radiopunjabivirsa.jpg",
+                url: "https://stream.zeno.fm/25h82wv629duv"
+            },         
+               {
+                name: "Sadeaala Radio",
+                genre: "punjabi",
+                image: "	https://radiosindia.com/images/sadeaalaradio.jpg",
+                url: "https://s47.myradiostream.com/:11234/;listen.mp3"
+            }, 
+                   
+            {
+                name: "Jagat Radio Punjabi FM",
+                genre: "Punjabi",
+                image: "https://radiosindia.com/images/jagatradio.jpg",
+                url: "https://node-32.zeno.fm/b7afzr3cmzzuv"
+            },
+                               
+            {
+                name: "Sadda Punjab Radio",
+                genre: "Punjabi",
+                image: "https://radiosindia.com/images/saddapunjab.jpg",
+                url: "https://spr.streamguys1.com/spr"
+            },
+                               
+            {
+                name: "Diljit Dosanjh Songs",
+                genre: "Punjabi",
+                image: "https://radiobarfi.com/wp-content/uploads/2022/02/Diljit-Dosanjh-Radio-Barfi.jpg",
+                url: "https://stream-30.zeno.fm/gn4txvg9ps8uv?zs=CCwYDT7rRLeigeTeqz9JIw"
+            },
+                               
+            {
+                name: "Mankirt Aulakh Songs",
+                genre: "Punjabi",
+                image: "https://radiobarfi.com/wp-content/uploads/2022/02/Mankirt-Aulakh-Radio-Barfi.jpg",
+                url: "https://stream-31.zeno.fm/tyte962zem8uv?zs=H5vndovSRC6yLqrLt9ds5Q"
+            },
+                               
+            {
+                name: "Ammy Virk Songs",
+                genre: "Punjabi",
+                image: "https://radiobarfi.com/wp-content/uploads/2022/02/Ammy-Virk-Radio-Barfi.jpg",
+                url: "https://stream-42.zeno.fm/9397qrt8bm8uv?zs=h7HNAnbDQoCxfaltH5FisA"
+            },
+
+            {
+                name: "Maninder Buttar Songs",
+                genre: "Punjabi",
+                image: "https://radiobarfi.com/wp-content/uploads/2022/02/Maninder-Buttar-Radio-Barfi.jpg",
+                url: "https://stream-55.zeno.fm/zcw9xhqpws8uv"
+            },
+            
+            
+            {
+                name: "Sidhu Moose Wala Song",
+                genre: "Punjabi",
+                image: "https://radiobarfi.com/wp-content/uploads/2022/02/Sidhu-Moose-Wala-Radio-Barfi.jpg",
+                url: "https://stream-46.zeno.fm/3awzkd77kuhvv?zs=wUudDiCLQx-JbIEo79hb0w"
+            },
+            {
+                name: "Punjabi Beats",
+                genre: "PunjabBeats of Punjabi",
+                image: "https://radiobarfi.com/wp-content/uploads/2024/11/Punjabi-Beats.png",
+                url: "https://stream.zeno.fm/qcy86xwg65quv"
+            },
+            {
+                name: "B Praak Songs",
+                genre: "Punjabi",
+                image: "https://radiobarfi.com/wp-content/uploads/2022/02/B-Praak-Radio-Barfi.jpg",
+                url: "https://stream-11.zeno.fm/x9e8vg93yf8uv?zs=WC5VwqltQ6OPLyH-054DVA"
+            },
+            {
+                name: "Karan Aujla Radio",
+                genre: "Punjabi",
+                image: "https://cdn.onlineradiobox.com/img/l/6/88756.v3.png",
+                url: "https://stream.zeno.fm/vrqrkmrfkzzuv"
+            },
+            {
+                name: "Sidhu Moose Wala Radio",
+                genre: "Punjabi",
+                image: "https://radiobarfi.com/wp-content/uploads/2022/02/Sidhu-Moose-Wala-Radio-Barfi.jpg",
+                url: "https://stream.zeno.fm/e5hahqs7twzuvl"
+            },
+            
+
+            {
+                name: "Korala Maan All Song Radio",
+                genre: "Punjabi",
+                image: "https://c.saavncdn.com/editorial/Let_sPlayKoralaMaanPunjabi_20231213093140.jpg",
+                url: "https://stream.zeno.fm/hxgarz1594zuv"
+            },           
+
+            {
+                name: "Chakde Punjabi",
+                genre: "Punjabi",
+                image: "https://cdn.onlineradiobox.com/img/l/6/136796.v3.png",
+                url: "https://stream.zeno.fm/wi6ktdc3f8gvv"
+            },
+            {
+                name: "Tiwana Radio",
+                genre: "Punjabi",
+                image: "https://liveradios.in/wp-content/uploads/tiwanaradio.jpg",
+                url: "https://stream.zeno.fm/1vp8oxcji4ftv"
+            },
+            {
+                name: "Punjabi World Radio",
+                genre: "Punjabi",
+                image: "https://zeno.fm/_next/image/?url=https%3A%2F%2Fimages.zeno.fm%2FWopRtJFJ8RzXO4Q1AKrzRfdTi3dPuM4pkhV4TeM2rzg%2Frs%3Afit%3A240%3A240%2Fg%3Ace%3A0%3A0%2FaHR0cHM6Ly9zdHJlYW0tdG9vbHMuemVub21lZGlhLmNvbS9jb250ZW50L3N0YXRpb25zL2FneHpmbnBsYm04dGMzUmhkSE55TWdzU0NrRjFkR2hEYkdsbGJuUVlnSURnLTRxdWpRa01DeElPVTNSaGRHbHZibEJ5YjJacGJHVVlnSURneC1Lejl3c01vZ0VFZW1WdWJ3L2ltYWdlLz91cGRhdGVkPTE2NjA4NjczNjYwMDA.webp&w=1200&q=100",
+                url: "https://stream.zeno.fm/r2u0p5bqhtzuv"
+            },
+            {
+                name: "OyePunjab Radio",
+                genre: "Punjabi",
+                image: "https://zeno.fm/_next/image/?url=https%3A%2F%2Fimages.zeno.fm%2FobJ_WUJpoU-ZcEncuNcYGsBdtMQfv5_pDreNdspH_jQ%2Frs%3Afit%3A240%3A240%2Fg%3Ace%3A0%3A0%2FaHR0cHM6Ly9zdHJlYW0tdG9vbHMuemVub21lZGlhLmNvbS9jb250ZW50L3N0YXRpb25zL2FneHpmbnBsYm04dGMzUmhkSE55TWdzU0NrRjFkR2hEYkdsbGJuUVlnSURRc2JYLXV3b01DeElPVTNSaGRHbHZibEJ5YjJacGJHVVlnSURROGRPc3JRa01vZ0VFZW1WdWJ3L2ltYWdlLz91cGRhdGVkPTE2NjE0Njc1OTMwMDA.webp&w=1200&q=100",
+                url: "https://stream.zeno.fm/7ev2z5sw6k0uv"
+            },
+            {
+                name: "Old Punjabi songs",
+                genre: "Punjabi",
+                image: "https://img.wynk.in/unsafe/200x200/filters:no_upscale():strip_exif():format(jpg)/http://s3.ap-south-1.amazonaws.com/discovery-prod-arsenal/arsenal/artworks/65a7479b6d77771e3a7b94a9/COLLECTION_52705729679461.png",
+                url: "https://stream.zeno.fm/1hv8up0ww8quv"
+            },
+            {
+                name: "Radio Punjabi Virsa",
+                genre: "Punjabi",
+                image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSHK-BhZzuUN_gnJr8IMwu1aoOggk4z0hGl8M9BOBo&s",
+                url: "https://stream.zeno.fm/9rgew0btzwzuv"
+            },
+            {
+                name: "Classic Radio Punjabi Geet",
+                genre: "Punjabi",
+                image: "https://static-media.streema.com/media/cache/4f/c8/4fc840d9aa5a8346cbae3c2e7085d927.jpg",
+                url: "https://stream.zeno.fm/b0tx7igceimtv"
+            },
+            {
+                name: "Amrinder Gill Radio",
+                genre: "Soul, Romantic, Punjabi",
+                image: "https://d371i8ihhgym7w.cloudfront.net/44322563.jpg",
+                url: "https://stream.zeno.fm/ntswtgpemzzuv"
+            },
+            {
+                name: "Sidhu Moose Wala",
+                genre: "Punjabi",
+                image: "https://zeno.fm/_ipx/s_128x128/https://images.zeno.fm/2ALotIBuqm95XqTEaTIy0G4i3eIOcfChbZ-jcyDOGRE/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvMmE3ZjQ0MGQtNmQ2NC00OGU1LThkNzYtNjgyNDI4NmQzZmUxL2ltYWdlLz91PTE2NzI2NDQ1NzEwMDA.webp",
+                url: "https://stream.zeno.fm/vwsyns0rkptuv"
+            },
+            {
+                name: "Radio Punjab Seattle AM 1680",
+                genre: "Punjabi",
+                image: "https://zeno.fm/_ipx/s_128x128/https://images.zeno.fm/_zS_MCvSTwYOls7X_icClLAKpPOHnAl8AsT8oD0tDQk/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvYWd4emZucGxibTh0YzNSaGRITnlNZ3NTQ2tGMWRHaERiR2xsYm5RWWdJQ0E0TEx3emdnTUN4SU9VM1JoZEdsdmJsQnliMlpwYkdVWWdJQ0FnTVROaFFvTW9nRUVlbVZ1YncvaW1hZ2UvP3U9MTY5OTY2MDQ1NTAwMA.webp",
+                url: "https://stream.zeno.fm/6wzdcv818s5tv"
+            },
+            {
+                name: "Babbu Maan",
+                genre: "Punjabi",
+                image: "https://zeno.fm/_ipx/s_128x128/https://images.zeno.fm/Osywo7NnXMn80cEfvAAcSSWBpZqR96XjEmAMi8rTmiQ/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvYWd4emZucGxibTh0YzNSaGRITnlNZ3NTQ2tGMWRHaERiR2xsYm5RWWdJREk2cTNQendrTUN4SU9VM1JoZEdsdmJsQnliMlpwYkdVWWdJRElnWk83cmdnTW9nRUVlbVZ1YncvaW1hZ2UvP3U9MTY2MTgzNTI0NzAwMA.webp",
+                url: "https://stream.zeno.fm/4ewhx0s31xhvv"
+            },
+            {
+                name: "Legend Sidhu Moose Wala",
+                genre: "Punjabi",
+                image: "https://zeno.fm/_ipx/s_128x128/https://images.zeno.fm/aJQ3gcdNjkYd3FVchjFsR7-su0S2deKXNXYHt7IsBhM/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvYWd4emZucGxibTh0YzNSaGRITnlNZ3NTQ2tGMWRHaERiR2xsYm5RWWdJREk2cTNQendrTUN4SU9VM1JoZEdsdmJsQnliMlpwYkdVWWdJREkycGlDNHdvTW9nRUVlbVZ1YncvaW1hZ2UvP3U9MTY2MTg1MzQ0OTAwMA.webp",
+                url: "https://stream.zeno.fm/nx9p5bq8cxhvv"
+            },
+           
+            {
+                name: "karan aujla",
+                genre: "Punjabi",
+                image: "https://zeno.fm/_ipx/s_128x128/https://images.zeno.fm/vmcC2cOnJYXHpRKXkD0HdPG9QPaQSP6XJyhe3qbRglw/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvYWd4emZucGxibTh0YzNSaGRITnlNZ3NTQ2tGMWRHaERiR2xsYm5RWWdJREk2cTNQendrTUN4SU9VM1JoZEdsdmJsQnliMlpwYkdVWWdJREl3WjdjNHdzTW9nRUVlbVZ1YncvaW1hZ2UvP3U9MTY2MTg1NTc2MDAwMA.webp",
+                url: "https://stream.zeno.fm/sp84z6r31xhvv"
+            },       
+      
+            
+
+            // Add more stations as needed
+        ];
+
+        // Initialize audio
+        const audio = new Audio();
+        let currentStation = null;
+
+        // Render stations
+        function renderStations() {
+            const container = document.getElementById('stationsContainer');
+            container.innerHTML = stations.map(station => `
+                <div class="station-card">
+                    <img src="${station.image}" class="station-image" alt="${station.name}">
+                    <div class="station-info">
+                        <h3>${station.name}</h3>
+                        <p class="station-genre">${station.genre}</p>
+                        <button class="play-button" onclick="playStation('${station.url}')">
+                            <i class="icon ion-md-play"></i> Play Now
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Play station function
+        function playStation(url) {
+            const station = stations.find(s => s.url === url);
+            if(!station) return;
+
+            if(currentStation !== url) {
+                audio.src = url;
+                currentStation = url;
+                
+                // Update player info
+                document.getElementById('currentArtwork').src = station.image;
+                document.getElementById('currentTitle').textContent = station.name;
+                document.getElementById('currentGenre').textContent = station.genre;
+            }
+            audio.play();
+            document.getElementById('player').style.display = 'flex';
+            updatePlayButton(true);
+        }
+
+        // Player controls
+        document.getElementById('playPauseBtn').addEventListener('click', () => {
+            if(audio.paused) {
+                audio.play();
+            } else {
+                audio.pause();
+            }
+            updatePlayButton(!audio.paused);
+        });
+
+        
+
+        // Volume control
+        document.getElementById('volume').addEventListener('input', (e) => {
+            audio.volume = e.target.value;
+        });
+
+        function updatePlayButton(isPlaying) {
+            const btn = document.getElementById('playPauseBtn');
+            btn.innerHTML = isPlaying ? 
+                '<i class="icon ion-md-pause"></i>' : 
+                '<i class="icon ion-md-play"></i>';
+        }
+
+        // Initial render
+        renderStations();
+    </script>
+</body>
+</html>
